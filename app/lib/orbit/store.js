@@ -49,7 +49,7 @@ const seedData = {
       relationships: {
         tasks: {
           data: {
-            task1: true
+            'task:task1': true
           }
         }
       }
@@ -61,7 +61,7 @@ const seedData = {
       attributes: { name: 'Task One' },
       relationships: {
         project: {
-          data: 'project1'
+          data: 'project:project1'
         }
       }
     },
@@ -70,7 +70,7 @@ const seedData = {
       attributes: { name: 'Task Two' },
       relationships: {
         project: {
-          data: 'project1'
+          data: 'project:project1'
         }
       }
     }
@@ -81,6 +81,7 @@ const Query = Ember.ArrayProxy.extend({
   run() {
     const results = this.get('store').runQuery(this.get('type'), this.get('filterFunction'));
     this.set('content', results);
+    console.log('results', results);
   }
 });
 
@@ -98,12 +99,14 @@ export default Ember.Object.extend({
 
   subscribe() {
     return this.buildNode('project', 'project1', {
-      tasks: this.buildQuery('task', record => record.relationships.project.data === 'project1')
+      tasks: this.buildQuery('task', record => record.relationships.project.data === 'project:project1')
     });
   },
 
   buildQuery(type, filterFunction) {
     const query = Query.create({store: this, type: type, filterFunction: filterFunction});
+
+    this.trackQuery(query);
 
     query.run();
 
@@ -127,8 +130,12 @@ export default Ember.Object.extend({
     return results;
   },
 
+  runAllQueries() {
+    this.get('_queries').forEach(query => query.run());
+  },
+
   trackQuery(query) {
-    this._queries.pushObject(query);
+    this.get('_queries').pushObject(query);
   },
 
   buildNode(type, id, queries = {}) {
@@ -146,6 +153,18 @@ export default Ember.Object.extend({
   },
 
   addTask(name) {
-    get(this, '_data.project.projectOne.tasks').pushObject(Ember.Object.create({name: name}));
+    this.get('_store').addRecord({
+      type: 'task',
+      attributes: {
+        name: name
+      },
+      relationships: {
+        project: {
+          data: 'project:project1'
+        }
+      }
+    });
+
+    this.runAllQueries();
   }
 });
