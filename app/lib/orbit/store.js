@@ -63,6 +63,15 @@ const seedData = {
           data: 'project1'
         }
       }
+    },
+    'task2': {
+      id: 'task2',
+      attributes: { name: 'Task Two' },
+      relationships: {
+        project: {
+          data: 'project1'
+        }
+      }
     }
   }
 };
@@ -70,8 +79,14 @@ const seedData = {
 const NodeProxy = Ember.Object.extend({
   source: null,
   path: null,
+  children: null,
 
   unknownProperty(key) {
+    const child = this.get(`children.${key}`);
+    return child || this._fetchAttribute(key);
+  },
+
+  _fetchAttribute(key) {
     return this.get('source').retrieve([...this.path, 'attributes', key]);
   }
 });
@@ -83,7 +98,16 @@ export default Ember.Object.extend({
   },
 
   subscribe() {
-    return NodeProxy.create({source: this._source, path: ['project', 'project1']});
+    return NodeProxy.create({
+      source: this._source,
+      path: ['project', 'project1'],
+      children: {
+        tasks: [
+          NodeProxy.create({source: this._source, path: ['task', 'task1']}),
+          NodeProxy.create({source: this._source, path: ['task', 'task2']})
+        ]
+      }
+    });
   },
 
   addTask(name) {
