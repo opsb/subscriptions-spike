@@ -88,11 +88,25 @@ export default Ember.Object.extend({
 
   subscribe() {
     return this.buildNode('project', 'project1', {
-      tasks: [
-        this.buildNode('task', 'task1'),
-        this.buildNode('task', 'task2')
-      ]
+      tasks: this.query('task', record => record.relationships.project.data === 'project1')
     });
+  },
+
+  query(type, callback) {
+    const allRecords = this._source.retrieve(type);
+    const allIds = Object.keys(allRecords);
+
+    const results = [];
+
+    allIds.forEach((id) => {
+      const record = allRecords[id];
+
+      if(callback(record)) {
+        results.push(this.buildNode(type, id));
+      }
+    });
+
+    return results;
   },
 
   buildNode(type, id, queries = {}) {
