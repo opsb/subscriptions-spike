@@ -80,10 +80,15 @@ const QueryProxy = Ember.ArrayProxy.extend({
 
 });
 
+const NodeProxy = Ember.ObjectProxy.extend({
+
+});
+
 export default Ember.Object.extend({
   init() {
     this._source = new MemorySource({schema});
     this._source.reset(seedData);
+    this._nodeProxies = {};
   },
 
   subscribe() {
@@ -111,7 +116,16 @@ export default Ember.Object.extend({
 
   buildNode(type, id, queries = {}) {
     const ref = this._source.retrieve([type, id]);
-    return Ember.Object.create(Object.assign({}, ref.attributes, queries));
+    const node = Ember.Object.create(Object.assign({}, ref.attributes, queries));
+    const nodeProxy = NodeProxy.create({content: node});
+    this.trackNodeProxy(type, id, nodeProxy);
+    return nodeProxy;
+  },
+
+  trackNodeProxy(type, id, nodeProxy) {
+    const path = [type, id].join('/');
+    this._nodeProxies[path] = this._nodeProxies[path] || [];
+    this._nodeProxies[path].push(nodeProxy);
   },
 
   addTask(name) {
