@@ -15,7 +15,7 @@ const schemaDefinition = {
         name: {type: 'string'}
       },
       relationships: {
-        planets: {type: 'hasMany', model: 'tasks', inverse: 'project'}
+        tasks: {type: 'hasMany', model: 'tasks', inverse: 'project'}
       }
     },
     task: {
@@ -40,9 +40,38 @@ const schemaDefinition = {
 
 const schema = new Schema(schemaDefinition);
 
+const seedData = {
+  project: {
+    'project1': {
+      id: 'project1',
+      attributes: { name: 'Project One' },
+      relationships: {
+        tasks: {
+          data: {
+            task1: true
+          }
+        }
+      }
+    }
+  },
+  task: {
+    'task1': {
+      id: 'task1',
+      attributes: { name: 'Task One' },
+      relationships: {
+        project: {
+          data: 'project1'
+        }
+      }
+    }
+  }
+};
+
 export default Ember.Object.extend({
   init() {
     this._source = new MemorySource({schema});
+    this._source.reset(seedData);
+
     this._data = {
       project: {
         projectOne: Ember.Object.create({
