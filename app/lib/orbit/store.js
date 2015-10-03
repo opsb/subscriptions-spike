@@ -2,6 +2,7 @@ import Ember from 'ember';
 import MemorySource from 'orbit-common/memory-source';
 import Schema from 'orbit-common/schema';
 import Orbit from 'orbit/main';
+import Store from 'orbit-common/store';
 
 Orbit.Promise = Ember.RSVP.Promise;
 
@@ -89,8 +90,8 @@ const NodeProxy = Ember.ObjectProxy.extend({
 
 export default Ember.Object.extend({
   init() {
-    this._source = new MemorySource({schema});
-    this._source.reset(seedData);
+    this._store = new Store({schema});
+    this._store.reset(seedData);
     this._nodeProxies = {};
     this._queries = [];
   },
@@ -110,7 +111,7 @@ export default Ember.Object.extend({
   },
 
   runQuery(type, callback) {
-    const allRecords = this._source.retrieve(type);
+    const allRecords = this._store.retrieve(type);
     const allIds = Object.keys(allRecords);
 
     const results = [];
@@ -131,7 +132,7 @@ export default Ember.Object.extend({
   },
 
   buildNode(type, id, queries = {}) {
-    const ref = this._source.retrieve([type, id]);
+    const ref = this._store.retrieve([type, id]);
     const node = Ember.Object.create(Object.assign({}, ref.attributes, queries));
     const nodeProxy = NodeProxy.create({content: node});
     this.trackNodeProxy(type, id, nodeProxy);
