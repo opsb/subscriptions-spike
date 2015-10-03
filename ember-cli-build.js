@@ -19,5 +19,13 @@ module.exports = function(defaults) {
   // please specify an object with the list of modules as keys
   // along with the exports of each module as its value.
 
+  // Required Orbit imports
+  app.import('bower_components/orbit.js/orbit.amd.js', {
+    exports: {'orbit': ['default']}
+  });
+  app.import('bower_components/orbit.js/orbit-common.amd.js', {
+    exports: {'orbit-common': ['default']}
+  });
+
   return app.toTree();
 };
