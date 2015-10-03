@@ -76,8 +76,11 @@ const seedData = {
   }
 };
 
-const QueryProxy = Ember.ArrayProxy.extend({
-
+const Query = Ember.ArrayProxy.extend({
+  run() {
+    const results = this.get('store').runQuery(this.get('type'), this.get('filterFunction'));
+    this.set('content', results);
+  }
 });
 
 const NodeProxy = Ember.ObjectProxy.extend({
@@ -89,15 +92,24 @@ export default Ember.Object.extend({
     this._source = new MemorySource({schema});
     this._source.reset(seedData);
     this._nodeProxies = {};
+    this._queries = [];
   },
 
   subscribe() {
     return this.buildNode('project', 'project1', {
-      tasks: this.query('task', record => record.relationships.project.data === 'project1')
+      tasks: this.buildQuery('task', record => record.relationships.project.data === 'project1')
     });
   },
 
-  query(type, callback) {
+  buildQuery(type, filterFunction) {
+    const query = Query.create({store: this, type: type, filterFunction: filterFunction});
+
+    query.run();
+
+    return query;
+  },
+
+  runQuery(type, callback) {
     const allRecords = this._source.retrieve(type);
     const allIds = Object.keys(allRecords);
 
@@ -114,6 +126,10 @@ export default Ember.Object.extend({
     return results;
   },
 
+  trackQuery(query) {
+    this._queries.pushObject(query);
+  },
+
   buildNode(type, id, queries = {}) {
     const ref = this._source.retrieve([type, id]);
     const node = Ember.Object.create(Object.assign({}, ref.attributes, queries));
@@ -125,7 +141,7 @@ export default Ember.Object.extend({
   trackNodeProxy(type, id, nodeProxy) {
     const path = [type, id].join('/');
     this._nodeProxies[path] = this._nodeProxies[path] || [];
-    this._nodeProxies[path].push(nodeProxy);
+    this._nodeProxies[path].pushObject(nodeProxy);
   },
 
   addTask(name) {
