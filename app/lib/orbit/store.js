@@ -67,27 +67,23 @@ const seedData = {
   }
 };
 
+const NodeProxy = Ember.Object.extend({
+  source: null,
+  path: null,
+
+  unknownProperty(key) {
+    return this.get('source').retrieve([...this.path, 'attributes', key]);
+  }
+});
+
 export default Ember.Object.extend({
   init() {
     this._source = new MemorySource({schema});
     this._source.reset(seedData);
-
-    this._data = {
-      project: {
-        projectOne: Ember.Object.create({
-          name: "Project one",
-          tasks: [
-            Ember.Object.create({name: "Task one"}),
-            Ember.Object.create({name: "Task two"}),
-            Ember.Object.create({name: "Task three"})
-          ]
-        })
-      }
-    }
   },
 
   subscribe() {
-    return this._data.project.projectOne;
+    return NodeProxy.create({source: this._source, path: ['project', 'project1']});
   },
 
   addTask(name) {
